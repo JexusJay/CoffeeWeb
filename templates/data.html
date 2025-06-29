@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Analysis Data Management</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+</head>
+<body>
+  <div class="container mt-5">
+    <h2>Analysis Data Management</h2>
+    <form method="GET" action="{{ url_for('data') }}" class="mb-3">
+      <div class="form-row">
+        <div class="col-md-3 mb-2">
+          <input type="text" class="form-control" name="location" placeholder="Location" value="{{ request.args.get('location', '') }}">
+        </div>
+        <div class="col-md-3 mb-2">
+          <input type="text" class="form-control" name="coffee_type" placeholder="Coffee Type" value="{{ request.args.get('coffee_type', '') }}">
+        </div>
+        <div class="col-md-3 mb-2">
+          <input type="date" class="form-control" name="capture_date" placeholder="Date" value="{{ request.args.get('capture_date', '') }}">
+        </div>
+        <div class="col-md-3 mb-2">
+          <input type="text" class="form-control" name="remarks" placeholder="Remarks" value="{{ request.args.get('remarks', '') }}">
+        </div>
+        <div class="col-md-3 mb-2">
+          <button type="submit" class="btn btn-success w-100">Search</button>
+        </div>
+      </div>
+    </form>
+    <div class="table-responsive" style="max-width: 1600px; margin: auto;">
+      <table class="table table-bordered table-sm">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Location</th>
+            <th>Coffee Type</th>
+            <th>Date</th>
+            <th>Remarks</th>
+            <th>Area</th>
+            <th>Perimeter</th>
+            <th>Eccentricity</th>
+            <th>Solidity</th>
+            <th>Centroid Row</th>
+            <th>Centroid Col</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in analyses %}
+          <tr>
+            <form method="POST" action="{{ url_for('edit_analysis', analysis_id=row['id']) }}">
+              <td>{{ row['id'] }}</td>
+              <td><input type="text" name="location" value="{{ row['location'] }}" class="form-control input-small" required></td>
+              <td><input type="text" name="coffee_type" value="{{ row['coffee_type'] }}" class="form-control" required></td>
+              <td><input type="date" name="capture_date" value="{{ row['capture_date'] }}" class="form-control" required></td>
+              <td><input type="text" name="remarks" value="{{ row['remarks'] }}" class="form-control"></td>
+              <td><input type="number" step="any" name="area" value="{{ row['area'] }}" class="width-input-data" required></td>
+              <td><input type="number" step="any" name="perimeter" value="{{ row['perimeter'] }}" class="width-input-data" required></td>
+              <td><input type="number" step="any" name="eccentricity" value="{{ row['eccentricity'] }}" class="width-input-data" required></td>
+              <td><input type="number" step="any" name="solidity" value="{{ row['solidity'] }}" class="width-input-data" required></td>
+              <td><input type="number" step="any" name="centroid_row" value="{{ row['centroid_row'] }}" class="width-input-data" required></td>
+              <td><input type="number" step="any" name="centroid_col" value="{{ row['centroid_col'] }}" class="width-input-data" required></td>
+              <td>
+                <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                <a href="{{ url_for('delete_analysis', analysis_id=row['id']) }}" class="btn btn-danger btn-sm"
+                   onclick="return confirm('Delete this analysis?');">Delete</a>
+              </td>
+            </form>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <nav aria-label="Page navigation">
+      <ul class="pagination justify-content-center">
+        {% if page > 1 %}
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for('data', page=page-1, location=request.args.get('location',''), coffee_type=request.args.get('coffee_type',''), capture_date=request.args.get('capture_date','')) }}">Previous</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Previous</span></li>
+        {% endif %}
+
+        {# Always show first page #}
+        <li class="page-item {% if 1 == page %}active{% endif %}">
+          <a class="page-link" href="{{ url_for('data', page=1, location=request.args.get('location',''), coffee_type=request.args.get('coffee_type',''), capture_date=request.args.get('capture_date','')) }}">1</a>
+        </li>
+
+        {# Show ellipsis if needed #}
+        {% if page > 4 %}
+          <li class="page-item disabled"><span class="page-link">...</span></li>
+        {% endif %}
+
+        {# Show pages around current page #}
+        {% for p in range(page-2, page+3) %}
+          {% if p > 1 and p < pages %}
+            <li class="page-item {% if p == page %}active{% endif %}">
+              <a class="page-link" href="{{ url_for('data', page=p, location=request.args.get('location',''), coffee_type=request.args.get('coffee_type',''), capture_date=request.args.get('capture_date','')) }}">{{ p }}</a>
+            </li>
+          {% endif %}
+        {% endfor %}
+
+        {# Show ellipsis if needed #}
+        {% if page < pages-3 %}
+          <li class="page-item disabled"><span class="page-link">...</span></li>
+        {% endif %}
+
+        {# Always show last page if more than 1 #}
+        {% if pages > 1 %}
+          <li class="page-item {% if pages == page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('data', page=pages, location=request.args.get('location',''), coffee_type=request.args.get('coffee_type',''), capture_date=request.args.get('capture_date','')) }}">{{ pages }}</a>
+          </li>
+        {% endif %}
+
+        {% if page < pages %}
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for('data', page=page+1, location=request.args.get('location',''), coffee_type=request.args.get('coffee_type',''), capture_date=request.args.get('capture_date','')) }}">Next</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Next</span></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+</body>
+</html>

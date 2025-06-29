@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Analyze</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
+  </head>
+  <body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-sm navbar-light bg-light">
+      <a class="navbar-brand" href="{{ url_for('index') }}">
+        <img src="{{ url_for('static', filename='images/brand/logo.png') }}" width="30" height="30" class="d-inline-block align-top" alt="" />
+        <span>BARAKO</span>
+      </a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('index') }}">HOME</a>
+          </li>
+          <li class="nav-item active">
+            <a class="nav-link" href="{{ url_for('analyze') }}">
+              ANALYZE <span class="sr-only">(current)</span>
+            </a>
+          </li>
+
+          {# If user is logged in, show Dashboard and Logout #}
+          {% if session.get('user_id') %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('dashboard') }}">DASHBOARD</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('logout') }}">LOGOUT</a>
+          </li>
+          {% else %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('login') }}">LOGIN</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('register') }}">REGISTER</a>
+          </li>
+          {% endif %}
+        </ul>
+      </div>
+    </nav>
+
+    <div class="page-wrapper">
+      <div class="container p-0">
+        <div class="row">
+          <!-- Image Column -->
+          <div class="col-4 d-flex align-items-center justify-content-center">
+            <img src="{{ url_for('static', filename='images/analyze.png') }}" alt="" class="img-fluid" />
+          </div>
+
+          <!-- Content Column -->
+          <div class="col-8 py-5">
+            <h1>ANALYZE</h1>
+            <h6>Instructions:</h6>
+            <p>
+              Upload one or more clear images of the coffee bean similar to the sample shown below.
+              <span><br />Only .JPG and .PNG file formats are accepted. You can select multiple images.</span>
+            </p>
+            <form action="{{ url_for('predict') }}" method="post" enctype="multipart/form-data">
+              <div class="row">
+                <!-- Example Image -->
+                <div class="col-md-3">
+                  <h6>Example:</h6>
+                  <img src="{{ url_for('static', filename='images/example.jpg') }}" alt="Bean Image Example"
+                    style="width: 100px; border: 1px solid lightgray; border-radius: 3%;" />
+                </div>
+
+                <!-- File Input and Submit Button -->
+                <div class="col-md-9">
+                  <div class="mt-4">
+                    <input class="form-control mb-2" type="file" name="file" accept=".jpg,.jpeg,.png" multiple required />
+                    <!-- Added 'multiple' attribute -->
+                  </div>
+                  <div class="d-grid">
+                    <input type="submit" value="Upload" class="btn btn-dark-green w-100">
+                  </div>
+                </div>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(255,245,230,0.85); z-index:9999; align-items:center; justify-content:center;">
+      <div class="text-center">
+        <div class="coffee-loader">
+          <div class="cup">
+            <div class="cup-body"></div>
+            <div class="cup-handle"></div>
+            <div class="cup-base"></div>
+            <div class="steam steam1"></div>
+            <div class="steam steam2"></div>
+            <div class="steam steam3"></div>
+          </div>
+        </div>
+        <div style="margin-top: 1rem; color: #5a3c0c; font-size: 1.2rem;">
+          Analyzing images, please wait...
+        </div>
+      </div>
+    </div>
+
+    <div id="alert-container" style="position: fixed; right: 2rem; bottom: 2.5rem; z-index: 1050; width: 100%; max-width: 400px; pointer-events: none;">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="custom-alert custom-alert-{{ category }}" style="pointer-events: auto;">
+              <span class="custom-alert-icon">
+                {% if category == 'success' %}
+                  <i class="bi bi-check-circle-fill"></i>
+                {% elif category == 'error' %}
+                  <i class="bi bi-x-circle-fill"></i>
+                {% else %}
+                  <i class="bi bi-info-circle-fill"></i>
+                {% endif %}
+              </span>
+              <span>{{ message }}</span>
+              <button type="button" class="custom-alert-close" onclick="this.parentElement.style.display='none';">&times;</button>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center">
+      <p>&copy; 2025. All rights reserved.</p>
+      <a href="https://www.vecteezy.com/">Stock photos by Vecteezy</a>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.6/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="{{ url_for('static', filename='js/custom.js') }}"></script>
+  </body>
+</html>
