@@ -4,7 +4,6 @@ import base64
 import sqlite3
 import functools
 import numpy as np
-import tensorflow as tf
 import click
 
 from flask import (
@@ -25,19 +24,6 @@ app.config.from_mapping(
     SECRET_KEY=SECRET_KEY,
     DATABASE=database_path
 )
-
-# ——— Load trained autoencoder model ———
-MODEL_PATH = 'trained_autoencoder.h5'
-model = tf.keras.models.load_model(
-    MODEL_PATH,
-    custom_objects={'mse': tf.keras.losses.MeanSquaredError()}
-)
-print("Model loaded.")
-
-# --- Load coffee bean classifier model ---
-BEAN_MODEL_PATH = 'beanVer1.h5'
-bean_model = tf.keras.models.load_model(BEAN_MODEL_PATH)
-print("Bean classifier loaded.")
 
 ##############################
 # Database helper functions  #
@@ -259,14 +245,11 @@ def image_to_base64(arr, mode="L"):
     im.save(buf, format="PNG")
     return base64.b64encode(buf.getvalue()).decode('utf-8')
 
-def is_coffee_bean(img, img_size=(224, 224)):
+def is_coffee_bean(img, bean_model, img_size=(224, 224)):
     img_resized = img.resize(img_size)
     img_array = np.array(img_resized) / 255.0
     img_array = np.expand_dims(img_array, axis=0)
     pred = bean_model.predict(img_array)
-    # Get class_indices from the model training (hardcode if needed)
-    # Example: {'coffee_bean': 0, 'not_coffee_bean': 1}
-    # If 0 is coffee_bean, then pred < 0.5 is coffee_bean
     return "coffee bean" if pred[0][0] < 0.5 else "not coffee bean"
 
 ########################
@@ -285,6 +268,17 @@ def analyze():
 @app.route('/predict', methods=['POST'])
 @login_required
 def predict():
+    import tensorflow as tf  # Lazy import
+    MODEL_PATH = 'trained_autoencoder.h5'
+    BEAN_MODEL_PATH = 'beanVer1.h5'
+
+    # Load models only when needed
+    model = tf.keras.models.load_model(
+        MODEL_PATH,
+        custom_objects={'mse': tf.keras.losses.MeanSquaredError()}
+    )
+    bean_model = tf.keras.models.load_model(BEAN_MODEL_PATH)
+
     files = request.files.getlist('file')
     if not files or files[0].filename == '':
         return "No file provided", 400
@@ -303,16 +297,16 @@ def predict():
             orig_b64 = image_to_base64(np.array(img) / 255.0, mode="RGB")
             mask_b64 = image_to_base64(mask.astype(np.float32), mode="L")
 
-            bean_label = is_coffee_bean(img)  # <-- Put it here
+            bean_label = is_coffee_bean(img, bean_model)  # Pass bean_model
 
             results.append({
                 'features': feats,
                 'original_image': orig_b64,
                 'segmentation_image': mask_b64,
-                'bean_label': bean_label  # <-- Add this to your result dict
+                'bean_label': bean_label
             })
         except Exception as e:
-            continue  # Optionally, collect errors for user feedback
+            continue
 
     if not results:
         return "No valid beans detected in any image.", 400
