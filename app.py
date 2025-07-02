@@ -484,13 +484,13 @@ def reports():
     # Get all unique towns and coffee types for the dropdowns
     if user_id:
         towns = db.execute(
-            'SELECT DISTINCT location FROM analysis WHERE user_id = ?', (user_id,)
+            'SELECT DISTINCT location FROM analysis'  # removed WHERE user_id = ?
         ).fetchall()
         coffee_types = db.execute(
-            'SELECT DISTINCT coffee_type FROM analysis WHERE user_id = ?', (user_id,)
+            'SELECT DISTINCT coffee_type FROM analysis'
         ).fetchall()
         remarks_list = db.execute(
-            'SELECT DISTINCT remarks FROM analysis WHERE user_id = ?', (user_id,)
+            'SELECT DISTINCT remarks FROM analysis'
         ).fetchall()
     else:
         towns = db.execute(
@@ -517,9 +517,10 @@ def reports():
     # Build query with filters
     params = []
     query = 'SELECT * FROM analysis WHERE 1=1'
-    if user_id:
-        query += ' AND user_id = ?'
-        params.append(user_id)
+    # REMOVE THIS BLOCK:
+    # if user_id:
+    #     query += ' AND user_id = ?'
+    #     params.append(user_id)
     if selected_town:
         query += ' AND location = ?'
         params.append(selected_town)
